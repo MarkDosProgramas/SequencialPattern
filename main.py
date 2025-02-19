@@ -67,11 +67,23 @@ padroes_rapidos = extract_prefixspan_features(df_rapidos, suporte_percentual=60)
 padroes_medios = extract_prefixspan_features(df_medios, suporte_percentual=85)
 padroes_lentos = extract_prefixspan_features(df_lentos, suporte_percentual=60)
 
-def find_exclusive_patterns(patterns_target, patterns_other1, patterns_other2):
-    patterns_target_set = {tuple(p["pattern"]) for p in patterns_target}
-    patterns_other_set = {tuple(p["pattern"]) for p in patterns_other1} | {tuple(p["pattern"]) for p in patterns_other2}
+def find_exclusive_patterns(patterns_target, patterns_other1, patterns_other2, limiar=50):
+    patterns_target_dict = {tuple(p["pattern"]): p["support"] for p in patterns_target}
+    patterns_other_dict = {}
     
-    exclusive_patterns = [p for p in patterns_target if tuple(p["pattern"]) not in patterns_other_set]
+    for p in patterns_other1 + patterns_other2:
+        pattern_tuple = tuple(p["pattern"])
+        if pattern_tuple in patterns_other_dict:
+            patterns_other_dict[pattern_tuple] += p["support"]
+        else:
+            patterns_other_dict[pattern_tuple] = p["support"]
+    
+    exclusive_patterns = []
+    for pattern, support in patterns_target_dict.items():
+        other_support = patterns_other_dict.get(pattern, 0)
+        if support > other_support + limiar:
+            exclusive_patterns.append({"pattern": list(pattern), "support": support})
+    
     return sorted(exclusive_patterns, key=lambda x: x["support"], reverse=True)
 
 exclusive_patterns_rapidos = find_exclusive_patterns(padroes_rapidos, padroes_medios, padroes_lentos)
