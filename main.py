@@ -32,11 +32,14 @@ if "CLUS_KME" in df.columns:
 else:
     raise ValueError("Erro: A coluna 'CLUS_KME' não foi encontrada.")
 
-df_cluster_mean = df.groupby("CLUS_KME")["duration_days"].mean()
+df_cluster_mean = df.groupby("CLUS_KME")["duration_days"].mean().sort_values()
 
-tempo_rapido = df_cluster_mean[df_cluster_mean < 3050].index.tolist()
-tempo_medio = df_cluster_mean[(df_cluster_mean >= 3050) & (df_cluster_mean <= 4000)].index.tolist()
-tempo_lento = df_cluster_mean[df_cluster_mean > 4000].index.tolist()
+
+print(df_cluster_mean)
+
+tempo_rapido = df_cluster_mean[df_cluster_mean < 2443.06].index.tolist()
+tempo_medio = df_cluster_mean[(df_cluster_mean >= 2443.06 ) & (df_cluster_mean <= 4141.02 )].index.tolist()
+tempo_lento = df_cluster_mean[df_cluster_mean > 4141.02 ].index.tolist()
 
 df_rapidos = df[df["CLUS_KME"].isin(tempo_rapido)]
 df_medios = df[df["CLUS_KME"].isin(tempo_medio)]
@@ -63,11 +66,11 @@ def extract_prefixspan_features(df, suporte_percentual=5):
     
     return sorted(extracted_patterns, key=lambda x: x["support"], reverse=True)
 
-padroes_rapidos = extract_prefixspan_features(df_rapidos, suporte_percentual=60)
-padroes_medios = extract_prefixspan_features(df_medios, suporte_percentual=85)
-padroes_lentos = extract_prefixspan_features(df_lentos, suporte_percentual=60)
+padroes_rapidos = extract_prefixspan_features(df_rapidos, suporte_percentual=40)
+padroes_medios = extract_prefixspan_features(df_medios, suporte_percentual=65)
+padroes_lentos = extract_prefixspan_features(df_lentos, suporte_percentual=53)
 
-def find_exclusive_patterns(patterns_target, patterns_other1, patterns_other2, limiar=50):
+def find_exclusive_patterns(patterns_target, patterns_other1, patterns_other2, limiar=35):
     patterns_target_dict = {tuple(p["pattern"]): p["support"] for p in patterns_target}
     patterns_other_dict = {}
     
@@ -90,14 +93,16 @@ exclusive_patterns_rapidos = find_exclusive_patterns(padroes_rapidos, padroes_me
 exclusive_patterns_medios = find_exclusive_patterns(padroes_medios, padroes_rapidos, padroes_lentos)
 exclusive_patterns_lentos = find_exclusive_patterns(padroes_lentos, padroes_rapidos, padroes_medios)
 
-def print_patterns(title, patterns):
-    print(title)
-    for i, pattern in enumerate(patterns, 1):
-        print(f"{i}. Padrão: {pattern['pattern']}, Suporte: {pattern['support']:.2f}%")
+with open("resultados.txt", "w", encoding="utf-8") as f:
+    def print_patterns(title, patterns):
+        f.write(title + "\n")
+        for i, pattern in enumerate(patterns, 1):
+            f.write(f"{i}. Padrão: {pattern['pattern']}, Suporte: {pattern['support']:.2f}%\n")
+        f.write("\n")
 
-print_patterns("Padrões predominantes EXCLUSIVOS nos Clusters Rápidos:", exclusive_patterns_rapidos)
-print_patterns("Padrões predominantes nos Clusters Rápidos:", padroes_rapidos)
-print_patterns("Padrões predominantes EXCLUSIVOS nos Clusters Médios:", exclusive_patterns_medios)
-print_patterns("Padrões predominantes nos Clusters Médios:", padroes_medios)
-print_patterns("Padrões predominantes EXCLUSIVOS nos Clusters Lentos:", exclusive_patterns_lentos)
-print_patterns("Padrões predominantes nos Clusters Lentos:", padroes_lentos)
+    print_patterns("Padrões predominantes EXCLUSIVOS nos Clusters Rápidos:", exclusive_patterns_rapidos)
+    print_patterns("Padrões predominantes nos Clusters Rápidos:", padroes_rapidos)
+    print_patterns("Padrões predominantes EXCLUSIVOS nos Clusters Médios:", exclusive_patterns_medios)
+    print_patterns("Padrões predominantes nos Clusters Médios:", padroes_medios)
+    print_patterns("Padrões predominantes EXCLUSIVOS nos Clusters Lentos:", exclusive_patterns_lentos)
+    print_patterns("Padrões predominantes nos Clusters Lentos:", padroes_lentos)
